@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t axmlr/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true axmlr/react-test npm test
+
+after_success:
+  - docker build -t axmlr/multi-client ./client
+  - docker build -t axmlr/multi-nginx ./nginx 
+  - docker build -t axmlr/multi-server ./server 
+  - docker build -t axmlr/multi-worker ./worker 
+  # Log in to docker CLI
+  - echo "#DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take images and push to docker gub
+  - docker push axmlr/multi-client
+  - docker push axmlr/multi-nginx
+  - docker push axmlr/multi-server
+  - docker push axmlr/multi-worker
